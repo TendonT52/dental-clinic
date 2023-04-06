@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+enum Role {
+  PATIENT
+  DENTIST
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dateOfBirth DateTime
+  email       String   @unique
+  firstName   String
+  lastName    String
+  telephone   String   @unique
+  hash        String
+  role        Role
+
+  Patient Patient?
+  Dentist Dentist?
+
+  @@index([email])
+  @@fulltext([email, firstName, lastName, telephone])
+}
+
+model Patient {
+  userId       Int           @id
+  user         User          @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+  Message      Message[]
+
+  @@index([userId])
+}
+
+model Dentist {
+  userId              Int                   @id
+  user                User                  @relation(fields: [userId], references: [id])
+  Appointment         Appointment[]
+  Message             Message[]
+  SpecialistOfDentist SpecialistOfDentist[]
+
+  @@index([userId])
+}
+
+model SpecialistOfDentist {
+  id Int @id @default(autoincrement())
+
+  yearOfExperience Int
+
+  dentistId    Int
+  dentist      Dentist    @relation(fields: [dentistId], references: [userId])
+  specialistId Int
+  specialist   Specialist @relation(fields: [specialistId], references: [id])
+
+  @@index([dentistId])
+  @@index([specialistId])
+}
+
+model Specialist {
+  id Int @id @default(autoincrement())
+
+  name String @unique
+
+  SpecialistOfDentist SpecialistOfDentist[]
+}
+
+enum Status {
+  PENDING
+  CONFIRMED
+  CANCELED
+  COMPLETED
+}
+
+model Appointment {
+  id Int @id @default(autoincrement())
+
+  details String   @db.Text
+  time    DateTime
+  status  Status
+
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [userId])
+
+  dentistId Int
+  dentist   Dentist @relation(fields: [dentistId], references: [userId])
+
+  @@index([dentistId, time(sort: Desc)])
+  @@index([patientId, time(sort: Desc)])
+  @@fulltext([details])
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+
+  message       String   @db.Text
+  time          DateTime
+  isPatientRead Boolean
+  isDentistRead Boolean
+
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [userId])
+
+  detistId Int
+  dentist  Dentist @relation(fields: [detistId], references: [userId])
+
+  @@index([detistId, patientId, time(sort: Desc)])
+  @@index([patientId, detistId, time(sort: Desc)])
+  @@fulltext([message])
+}
