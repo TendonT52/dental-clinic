@@ -30,6 +30,7 @@ model User {
   telephone   String   @unique
   hash        String
   role        Role
+  refreshToken String?
 
   Patient Patient?
   Dentist Dentist?

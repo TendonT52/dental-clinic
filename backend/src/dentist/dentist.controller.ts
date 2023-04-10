@@ -7,7 +7,6 @@ import {
   Post,
   Put,
   Req,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Auth } from 'src/auth/roles.decorator';
@@ -24,14 +23,14 @@ export class DentistController {
     return this.dentistService.createDentist(req);
   }
 
+  @Get()
+  getAllDentist() {
+    return this.dentistService.listDentist();
+  }
+
   @Get(':id')
-  @Auth(Role.DENTIST, Role.ADMIN)
+  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
   getDentist(@Param('id', new ParseIntPipe()) id, @Req() req) {
-    if (req.user.role === Role.DENTIST && req.user.userId !== id) {
-      throw new UnauthorizedException(
-        'You are not authorized to access this resource',
-      );
-    }
     return this.dentistService.getDentist(req.user.userId);
   }
 

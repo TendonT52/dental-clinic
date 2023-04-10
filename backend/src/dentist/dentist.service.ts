@@ -3,7 +3,7 @@ import { Prisma, Role } from '@prisma/client';
 import * as argon from 'argon2';
 import { PrismaError } from 'prisma-error-enum';
 import { AuthService } from 'src/auth/auth.service';
-import { CreateDentistReq, CreateDentistRes } from 'src/dto/createDentist.dto';
+import { CreateDentistReq } from 'src/dto/createDentist.dto';
 import { GetDentistRes } from 'src/dto/getDentist.dto';
 import { UpdateDentistReq } from 'src/dto/updateDentist.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,7 +15,7 @@ export class DentistService {
     private authService: AuthService,
   ) {}
 
-  async createDentist(req: CreateDentistReq): Promise<CreateDentistRes> {
+  async createDentist(req: CreateDentistReq) {
     try {
       const hash = await argon.hash(req.password);
       const user = await this.prismaService.user.create({
@@ -43,10 +43,7 @@ export class DentistService {
       });
 
       return {
-        accessToken: await this.authService.generateAccessToken(
-          user.id,
-          user.role,
-        ),
+        token: await this.authService.getTokens(user.id, user.role),
         id: user.id,
       };
     } catch (error) {
@@ -144,5 +141,44 @@ export class DentistService {
       }
       throw error;
     }
+  }
+
+  async listDentist() {
+    const dentists = await this.prismaService.user.findMany({
+      where: {
+        role: Role.DENTIST,
+      },
+      include: {
+        Dentist: {
+          include: {
+            SpecialistOfDentist: {
+              include: {
+                specialist: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return dentists.map((item) => {
+      return {
+        id: item.id,
+        dateOfBirth: item.dateOfBirth,
+        email: item.email,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        telephone: item.telephone,
+        specialist: item.Dentist.SpecialistOfDentist.map((item) => {
+          return {
+            name: item.specialist.name,
+            yearOfExperience: item.yearOfExperience,
+          };
+        }),
+        totalExperience: item.Dentist.SpecialistOfDentist.reduce(
+          (acc, cur) => acc + cur.yearOfExperience,
+          0,
+        ),
+      };
+    });
   }
 }

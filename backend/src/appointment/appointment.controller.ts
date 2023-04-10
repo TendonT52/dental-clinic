@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -11,6 +13,7 @@ import {
 import { Role } from '@prisma/client';
 import { Auth } from 'src/auth/roles.decorator';
 import { CreateAppointmentReq } from 'src/dto/createAppointment.dto';
+import { UpdateAppointmentReq } from 'src/dto/updateAppointment.dto';
 import { AppointmentService } from './appointment.service';
 
 @Controller('appointments')
@@ -23,13 +26,13 @@ export class AppointmentController {
     return this.appointmentService.createAppointment(req.user.userId, body);
   }
 
-  @Post(':id/cancel')
+  @Patch(':id/cancel')
   @Auth(Role.PATIENT, Role.DENTIST)
   cancelAppointment(@Req() req, @Param('id', new ParseIntPipe()) id: number) {
     return this.appointmentService.cancelAppointment(req.user.userId, id);
   }
 
-  @Post(':id/confirm')
+  @Patch(':id/confirm')
   @Auth(Role.DENTIST)
   confirmAppointment(@Req() req, @Param('id', new ParseIntPipe()) id: number) {
     return this.appointmentService.confirmAppointment(req.user.userId, id);
@@ -52,6 +55,22 @@ export class AppointmentController {
         details,
       },
     );
+  }
+
+  @Patch(':id')
+  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
+  updateAppointmentByDetails(
+    @Param('id', new ParseIntPipe()) id,
+    @Req() req,
+    @Body() body: UpdateAppointmentReq,
+  ) {
+    return this.appointmentService.updateAppointmentByDetails(id, body);
+  }
+
+  @Delete(':id')
+  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
+  deleteAppointmentByDetails(@Param('id', new ParseIntPipe()) id) {
+    return this.appointmentService.deleteAppointment(id);
   }
 
   @Get('patient')

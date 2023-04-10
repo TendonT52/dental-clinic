@@ -137,6 +137,19 @@ export async function main() {
   }
 
   await Promise.all(appointments);
+
+  const adminSeed = {
+    email: 'admin@test.com',
+    firstName: 'testFirstname7',
+    lastName: 'testLastname7',
+    telephone: 'testTelephone7',
+    dateOfBirth: chance.birthday(),
+    role: Role.ADMIN,
+    hash: await argon.hash('testPassw!@#ord1234'),
+  };
+  await prisma.user.create({
+    data: adminSeed,
+  });
 }
 
 main()

@@ -20,4 +20,15 @@ export class UserService {
       },
     });
   }
+
+  updateRefreshToken(id: number, refreshToken: string) {
+    return this.prismaService.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        refreshToken: refreshToken,
+      },
+    });
+  }
 }

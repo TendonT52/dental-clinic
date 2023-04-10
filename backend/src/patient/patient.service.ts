@@ -4,7 +4,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import * as argon from 'argon2';
 import { PrismaError } from 'prisma-error-enum';
 import { AuthService } from 'src/auth/auth.service';
-import { CreatePatientReq, CreatePatientRes } from 'src/dto/createPatient.dto';
+import { CreatePatientReq } from 'src/dto/createPatient.dto';
 import { getPatientRes } from 'src/dto/getPatient.dto';
 import { UpdatePatientReq } from 'src/dto/updatePatient.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -16,7 +16,7 @@ export class PatientService {
     private authService: AuthService,
   ) {}
 
-  async createPatient(req: CreatePatientReq): Promise<CreatePatientRes> {
+  async createPatient(req: CreatePatientReq) {
     const hash = await argon.hash(req.password);
     try {
       const user = await this.prismaService.user.create({
@@ -35,10 +35,7 @@ export class PatientService {
       });
 
       return {
-        accessToken: await this.authService.generateAccessToken(
-          user.id,
-          user.role,
-        ),
+        token: await this.authService.getTokens(user.id, user.role),
         user: {
           id: user.id,
           email: user.email,

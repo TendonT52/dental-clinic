@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from './guard/jwtAuth.guard';
+import { AccessTokenGuard } from './guard/jwtAuth.guard';
 
 export const ROLES_KEY = 'roles';
 
@@ -37,6 +37,6 @@ export class RolesGuard implements CanActivate {
 export function Auth(...roles: Role[]) {
   return applyDecorators(
     SetMetadata(ROLES_KEY, roles),
-    UseGuards(JwtAuthGuard, RolesGuard),
+    UseGuards(AccessTokenGuard, RolesGuard),
   );
 }

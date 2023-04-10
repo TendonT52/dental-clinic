@@ -5,6 +5,7 @@ import {
   CreateAppointmentReq,
   CreateAppointmentRes,
 } from 'src/dto/createAppointment.dto';
+import { UpdateAppointmentReq } from 'src/dto/updateAppointment.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -16,6 +17,14 @@ export class AppointmentService {
     req: CreateAppointmentReq,
   ): Promise<CreateAppointmentRes> {
     try {
+      const prev = await this.prismaService.appointment.findFirst({
+        where: {
+          patientId: patientId,
+        },
+      });
+      if (prev) {
+        throw new ForbiddenException('appointment already exists');
+      }
       const appointment = await this.prismaService.appointment.create({
         data: {
           time: req.time,
@@ -42,6 +51,7 @@ export class AppointmentService {
           throw new ForbiddenException('appointment must be unique');
         }
       }
+      return error;
     }
   }
 
@@ -189,15 +199,10 @@ export class AppointmentService {
       details: string;
     },
   ) {
-    console.log({
-      userId,
-      role,
-      query,
-    });
     try {
       let appointment: Appointment[];
       if (role === Role.PATIENT) {
-        appointment = await this.prismaService.appointment.findMany({
+        const appointment = await this.prismaService.appointment.findMany({
           skip: query.skip,
           take: query.take,
           where: {
@@ -210,19 +215,12 @@ export class AppointmentService {
             dentist: {
               include: {
                 user: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                    email: true,
+                  include: {
                     Dentist: {
-                      select: {
+                      include: {
                         SpecialistOfDentist: {
-                          select: {
-                            specialist: {
-                              select: {
-                                name: true,
-                              },
-                            },
+                          include: {
+                            specialist: true,
                           },
                         },
                       },
@@ -232,6 +230,25 @@ export class AppointmentService {
               },
             },
           },
+        });
+        return appointment.map((appointment) => {
+          return {
+            id: appointment.id,
+            time: appointment.time,
+            details: appointment.details,
+            status: appointment.status,
+            dentist: {
+              id: appointment.dentist.userId,
+              firstName: appointment.dentist.user.firstName,
+              lastName: appointment.dentist.user.lastName,
+              email: appointment.dentist.user.email,
+              telephone: appointment.dentist.user.telephone,
+              specialist:
+                appointment.dentist.user.Dentist.SpecialistOfDentist.map(
+                  (specialist) => specialist.specialist.name,
+                ),
+            },
+          };
         });
       }
       if (role === Role.DENTIST) {
@@ -265,5 +282,27 @@ export class AppointmentService {
         }
       }
     }
+  }
+
+  async updateAppointmentByDetails(id: number, body: UpdateAppointmentReq) {
+    console.log(body);
+    await this.prismaService.appointment.update({
+      where: {
+        id: id,
+      },
+      data: {
+        dentistId: body.dentistId,
+        time: body.time,
+        details: body.details,
+      },
+    });
+  }
+
+  deleteAppointment(id: number) {
+    return this.prismaService.appointment.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }
