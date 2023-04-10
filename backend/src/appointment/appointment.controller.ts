@@ -64,13 +64,22 @@ export class AppointmentController {
     @Req() req,
     @Body() body: UpdateAppointmentReq,
   ) {
-    return this.appointmentService.updateAppointmentByDetails(id, body);
+    return this.appointmentService.updateAppointmentByDetails(
+      id,
+      body,
+      req.user.userId,
+      req.user.role,
+    );
   }
 
   @Delete(':id')
   @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
-  deleteAppointmentByDetails(@Param('id', new ParseIntPipe()) id) {
-    return this.appointmentService.deleteAppointment(id);
+  deleteAppointmentByDetails(@Param('id', new ParseIntPipe()) id, @Req() req) {
+    return this.appointmentService.deleteAppointment(
+      id,
+      req.user.userId,
+      req.user.role,
+    );
   }
 
   @Get('patient')

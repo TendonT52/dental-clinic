@@ -284,21 +284,53 @@ export class AppointmentService {
     }
   }
 
-  async updateAppointmentByDetails(id: number, body: UpdateAppointmentReq) {
-    console.log(body);
-    await this.prismaService.appointment.update({
-      where: {
-        id: id,
-      },
-      data: {
-        dentistId: body.dentistId,
-        time: body.time,
-        details: body.details,
-      },
-    });
+  async updateAppointmentByDetails(
+    id: number,
+    body: UpdateAppointmentReq,
+    userId: number,
+    role: Role,
+  ) {
+    try {
+      if (role === Role.PATIENT) {
+        const appo = await this.prismaService.appointment.findUnique({
+          where: {
+            id: id,
+          },
+        });
+        if (appo.patientId !== userId) {
+          throw new ForbiddenException(
+            'You are not authorized to update this appointment',
+          );
+        }
+      }
+      await this.prismaService.appointment.update({
+        where: {
+          id: id,
+        },
+        data: {
+          dentistId: body.dentistId,
+          time: body.time,
+          details: body.details,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
-  deleteAppointment(id: number) {
+  async deleteAppointment(id: number, userId: number, role: Role) {
+    if (role === Role.PATIENT) {
+      const appo = await this.prismaService.appointment.findUnique({
+        where: {
+          id: id,
+        },
+      });
+      if (appo.patientId !== userId) {
+        throw new ForbiddenException(
+          'You are not authorized to delete this appointment',
+        );
+      }
+    }
     return this.prismaService.appointment.delete({
       where: {
         id: id,
