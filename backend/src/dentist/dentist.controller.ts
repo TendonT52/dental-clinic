@@ -24,6 +24,7 @@ export class DentistController {
   }
 
   @Get()
+  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
   getAllDentist() {
     return this.dentistService.listDentist();
   }
