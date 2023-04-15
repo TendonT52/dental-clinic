@@ -1,22 +1,24 @@
-import { OnModuleInit } from '@nestjs/common';
+import { OnModuleInit, UseGuards } from '@nestjs/common';
 import {
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Role } from '@prisma/client';
 import { Server } from 'socket.io';
-import { Auth } from 'src/auth/roles.decorator';
+import { AuthSocketGuard } from './auth.guard';
 
 @WebSocketGateway()
 export class MyGateWay implements OnModuleInit {
   @WebSocketServer()
   server: Server;
 
-  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
   onModuleInit() {
     this.server.on('connection', (socket) => {
+      const token = socket.handshake.headers.access_token;
+      if (!token) {
+        socket.disconnect();
+      }
       console.log('Client connected: ', socket.id);
       socket.on('disconnect', () => {
         console.log('Client disconnected');
@@ -24,10 +26,9 @@ export class MyGateWay implements OnModuleInit {
     });
   }
 
-  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
+  @UseGuards(AuthSocketGuard)
   @SubscribeMessage('newMessage')
   onNewMessage(@MessageBody() body: any) {
-    console.log(body);
     this.server.emit('onMessage', {
       message: 'New Message',
       content: body,
