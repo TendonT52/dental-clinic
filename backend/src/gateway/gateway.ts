@@ -5,13 +5,16 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { Role } from '@prisma/client';
 import { Server } from 'socket.io';
+import { Auth } from 'src/auth/roles.decorator';
 
 @WebSocketGateway()
 export class MyGateWay implements OnModuleInit {
   @WebSocketServer()
   server: Server;
 
+  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
   onModuleInit() {
     this.server.on('connection', (socket) => {
       console.log('Client connected: ', socket.id);
@@ -21,6 +24,7 @@ export class MyGateWay implements OnModuleInit {
     });
   }
 
+  @Auth(Role.PATIENT, Role.DENTIST, Role.ADMIN)
   @SubscribeMessage('newMessage')
   onNewMessage(@MessageBody() body: any) {
     console.log(body);
