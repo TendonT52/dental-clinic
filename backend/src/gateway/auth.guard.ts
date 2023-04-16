@@ -5,6 +5,7 @@ import { Socket } from 'socket.io';
 
 let userId = 0;
 let role = '';
+let roomId = 0;
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -26,9 +27,11 @@ export class AuthGuard implements CanActivate {
     token = 'Bearer ' + token;
     try {
       const decoded = this.jwtService.verify(token.split(' ')[1]);
+      const param = socket.handshake.query.roomId;
       console.log('decoded: ', decoded.sub, decoded.role);
       userId = decoded.sub;
       role = decoded.role;
+      roomId = typeof param === 'string' ? parseInt(param) : parseInt(param[0]);
       return true;
     } catch (err) {
       console.log('err: ', err);
@@ -41,5 +44,6 @@ export function getUserId() {
   return {
     userID: userId,
     role: role,
+    roomId: roomId,
   };
 }

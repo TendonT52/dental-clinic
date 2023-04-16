@@ -29,9 +29,9 @@ export class MyGateWay implements OnModuleInit {
   @UseGuards(AuthGuard)
   @SubscribeMessage('newMessage')
   onNewMessage(@MessageBody() body: any) {
-    const { userID, role } = getUserId();
-    this.server.emit('onMessage', {
-      message: `Sent From userId: ${userID}, role: ${role}`,
+    const { userID, role, roomId } = getUserId();
+    this.server.emit(roomId.toString(), {
+      message: `Sent From userId: ${userID}, role: ${role}, roomId: ${roomId}`,
       content: body,
     });
   }
