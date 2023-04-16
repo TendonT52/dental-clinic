@@ -6,7 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { AuthSocketGuard } from './auth.guard';
+import { AuthGuard } from './auth.guard';
 
 @WebSocketGateway()
 export class MyGateWay implements OnModuleInit {
@@ -26,7 +26,7 @@ export class MyGateWay implements OnModuleInit {
     });
   }
 
-  @UseGuards(AuthSocketGuard)
+  @UseGuards(AuthGuard)
   @SubscribeMessage('newMessage')
   onNewMessage(@MessageBody() body: any) {
     this.server.emit('onMessage', {
