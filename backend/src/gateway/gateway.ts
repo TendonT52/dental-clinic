@@ -6,7 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { AuthGuard } from './auth.guard';
+import { AuthGuard, getUserId } from './auth.guard';
 
 @WebSocketGateway()
 export class MyGateWay implements OnModuleInit {
@@ -29,8 +29,9 @@ export class MyGateWay implements OnModuleInit {
   @UseGuards(AuthGuard)
   @SubscribeMessage('newMessage')
   onNewMessage(@MessageBody() body: any) {
+    const { userID, role } = getUserId();
     this.server.emit('onMessage', {
-      message: 'New Message',
+      message: `Sent From userId: ${userID}, role: ${role}`,
       content: body,
     });
   }
