@@ -8,7 +8,7 @@ export class RoomController {
   constructor(private roomService: RoomService) {}
   @Post()
   @Auth(Role.PATIENT)
-  createAppointment(@Req() req) {
+  createRoom(@Req() req) {
     return this.roomService.createRoom(req.user.userId);
   }
 
