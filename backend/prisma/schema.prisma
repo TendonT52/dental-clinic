@@ -44,6 +44,7 @@ model Patient {
   user         User          @relation(fields: [userId], references: [id])
   appointments Appointment[]
   Message      Message[]
+  Room         Room?
 
   @@index([userId])
 }
@@ -122,4 +123,13 @@ model Message {
   @@index([detistId, patientId, time(sort: Desc)])
   @@index([patientId, detistId, time(sort: Desc)])
   @@fulltext([message])
+}
+
+model Room {
+  id Int @id @default(autoincrement())
+
+  patientId Int @unique
+  patient   Patient @relation(fields: [patientId], references: [userId])
+
+  @@index([patientId])
 }
